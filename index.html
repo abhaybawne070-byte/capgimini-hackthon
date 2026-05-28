@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aura Engine v2.0 - AI Health Triage Assistant</title>
+    <meta name="description" content="Advanced AI health triage assistant optimized for women in rural India. Comforting guidance, Hindi-English support, offline fuzzy matcher, offline QR ticket, and medical translations for ASHA workers.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@300;400;500;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Background decorative blur elements -->
+    <div class="blur-blob blob-1"></div>
+    <div class="blur-blob blob-2"></div>
+    <div class="blur-blob blob-3"></div>
+
+    <div class="app-container">
+        <!-- HEADER -->
+        <header class="app-header">
+            <div class="logo-area">
+                <div class="logo-icon-wrapper">
+                    <svg class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="auraGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#ff758c" />
+                                <stop offset="100%" stop-color="#ff7eb3" />
+                            </linearGradient>
+                        </defs>
+                        <circle cx="50" cy="50" r="38" fill="none" stroke="url(#auraGrad)" stroke-width="4" stroke-linecap="round" class="logo-pulse-circle" />
+                        <path d="M50,22 C35,40 32,55 50,78 C68,55 65,40 50,22 Z" fill="url(#auraGrad)" class="logo-heart-petal" />
+                    </svg>
+                </div>
+                <div class="logo-text">
+                    <h1 class="logo-title">Aura <span class="version-tag">v2.0</span></h1>
+                    <p class="logo-subtitle" id="header-tagline">सुरक्षित स्वास्थ्य सलाह, हर बहन के लिए</p>
+                </div>
+            </div>
+            
+            <div class="header-controls">
+                <!-- Accessibility Text Scaler -->
+                <div class="font-scaler" id="accessibility-font-controls">
+                    <button class="font-scale-btn" onclick="adjustFontSize(-0.1)" title="छोटे अक्षर (Decrease text size)">A-</button>
+                    <button class="font-scale-btn reset" onclick="adjustFontSize(0)" title="सामान्य अक्षर (Reset text size)">A</button>
+                    <button class="font-scale-btn" onclick="adjustFontSize(0.1)" title="बड़े अक्षर (Increase text size)">A+</button>
+                </div>
+
+                <!-- Language Selector -->
+                <div class="language-selector">
+                    <button class="lang-btn active" id="btn-lang-hi" onclick="setLanguage('hi')">हिंदी</button>
+                    <button class="lang-btn" id="btn-lang-en" onclick="setLanguage('en')">English</button>
+                </div>
+
+                <!-- Settings Cog Button -->
+                <button class="icon-btn settings-trigger-btn" id="btn-settings" aria-label="Settings" onclick="openModal()">
+                    <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- MAIN LAYOUT -->
+        <main class="main-content">
+            <!-- LEFT PANEL: INPUTS & PRESETS -->
+            <section class="input-panel card">
+                <div class="panel-header">
+                    <h2 id="input-title">आप कैसा महसूस कर रही हैं?</h2>
+                    <p id="input-subtitle" class="text-muted">अपनी बीमारी या दर्द के बारे में नीचे लिखें या बोलकर बताएं।</p>
+                </div>
+
+                <!-- Textarea and Voice Control -->
+                <div class="symptom-input-wrapper">
+                    <textarea id="symptom-input" placeholder="जैसे: 2 दिन से सफेद पानी आ रहा है और पेट में दर्द है..." rows="4"></textarea>
+                    
+                    <div class="input-actions-bar">
+                        <!-- Speak Button -->
+                        <button class="voice-btn" id="btn-voice" onclick="toggleSpeechRecognition()" title="बोलकर बताएं">
+                            <span class="mic-icon-wrapper">
+                                <svg class="mic-svg" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                                    <line x1="12" y1="19" x2="12" y2="23"></line>
+                                    <line x1="8" y1="23" x2="16" y2="23"></line>
+                                </svg>
+                            </span>
+                            <span id="voice-btn-text">बोलें (Tap to Speak)</span>
+                        </button>
+                        
+                        <!-- Characters Counter or Status -->
+                        <div class="input-status" id="voice-status"></div>
+                    </div>
+                </div>
+
+                <!-- Voice Recording Pulse Overlay (hidden by default) -->
+                <div class="voice-overlay hidden" id="voice-overlay">
+                    <div class="voice-pulse-container">
+                        <div class="pulse-ring Ring1"></div>
+                        <div class="pulse-ring Ring2"></div>
+                        <div class="pulse-ring Ring3"></div>
+                        <div class="pulse-mic">
+                            <svg viewBox="0 0 24 24" width="36" height="36" stroke="white" stroke-width="2" fill="none">
+                                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                                <line x1="12" y1="19" x2="12" y2="23"></line>
+                                <line x1="8" y1="23" x2="16" y2="23"></line>
+                            </svg>
+                        </div>
+                    </div>
+                    <p class="voice-listening-msg" id="voice-listening-msg">सुन रहे हैं... कृपया बोलें</p>
+                    <button class="voice-stop-btn" onclick="stopSpeechRecognition()">रोकें (Stop)</button>
+                </div>
+
+                <!-- Preset Chips Section -->
+                <div class="presets-section">
+                    <h3 id="presets-title">आसानी से चुनें:</h3>
+                    <div class="chips-container" id="chips-container">
+                        <!-- Chips will be generated dynamically based on language -->
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button class="btn-submit" id="btn-submit" onclick="processSymptoms()">
+                    <span id="submit-text">जांच शुरू करें (Analyze Symptoms)</span>
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </button>
+            </section>
+
+            <!-- RIGHT PANEL: DIAGNOSIS & INTERACTIVE OUTPUT -->
+            <section class="output-panel card">
+                <!-- 1. EMPTY STATE -->
+                <div class="output-state-view" id="state-empty">
+                    <div class="empty-vector">
+                        <!-- Beautiful Animated Lotus/Aura Mandala -->
+                        <div class="mandala-container">
+                            <svg class="mandala-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                                <g transform="translate(50,50)">
+                                    <circle r="12" fill="rgba(255, 117, 140, 0.15)" stroke="#ff758c" stroke-width="0.5"/>
+                                    <!-- Rotating petals -->
+                                    <g class="mandala-rotate">
+                                        <path d="M 0,-10 C 10,-30 20,-30 0,-45 C -20,-30 -10,-30 0,-10 Z" fill="rgba(255, 117, 140, 0.25)" stroke="#ff758c" stroke-width="0.5" transform="rotate(0)"/>
+                                        <path d="M 0,-10 C 10,-30 20,-30 0,-45 C -20,-30 -10,-30 0,-10 Z" fill="rgba(255, 117, 140, 0.25)" stroke="#ff758c" stroke-width="0.5" transform="rotate(45)"/>
+                                        <path d="M 0,-10 C 10,-30 20,-30 0,-45 C -20,-30 -10,-30 0,-10 Z" fill="rgba(255, 117, 140, 0.25)" stroke="#ff758c" stroke-width="0.5" transform="rotate(90)"/>
+                                        <path d="M 0,-10 C 10,-30 20,-30 0,-45 C -20,-30 -10,-30 0,-10 Z" fill="rgba(255, 117, 140, 0.25)" stroke="#ff758c" stroke-width="0.5" transform="rotate(135)"/>
+                                        <path d="M 0,-10 C 10,-30 20,-30 0,-45 C -20,-30 -10,-30 0,-10 Z" fill="rgba(255, 117, 140, 0.25)" stroke="#ff758c" stroke-width="0.5" transform="rotate(180)"/>
+                                        <path d="M 0,-10 C 10,-30 20,-30 0,-45 C -20,-30 -10,-30 0,-10 Z" fill="rgba(255, 117, 140, 0.25)" stroke="#ff758c" stroke-width="0.5" transform="rotate(225)"/>
+                                        <path d="M 0,-10 C 10,-30 20,-30 0,-45 C -20,-30 -10,-30 0,-10 Z" fill="rgba(255, 117, 140, 0.25)" stroke="#ff758c" stroke-width="0.5" transform="rotate(270)"/>
+                                        <path d="M 0,-10 C 10,-30 20,-30 0,-45 C -20,-30 -10,-30 0,-10 Z" fill="rgba(255, 117, 140, 0.25)" stroke="#ff758c" stroke-width="0.5" transform="rotate(315)"/>
+                                    </g>
+                                </g>
+                            </svg>
+                        </div>
+                    </div>
+                    <h3 id="empty-title">नमस्ते, मैं आपकी दीदी और स्वास्थ्य सहायक हूँ।</h3>
+                    <p id="empty-subtitle">कृपया बाईं तरफ अपनी तकलीफ बताएं। मैं आपको सही मार्गदर्शन और आपकी भाषा में सलाह दूँगी।</p>
+                </div>
+
+                <!-- 2. LOADING STATE -->
+                <div class="output-state-view hidden" id="state-loading">
+                    <div class="aura-loader">
+                        <div class="pulse-wave wave-1"></div>
+                        <div class="pulse-wave wave-2"></div>
+                        <div class="pulse-wave wave-3"></div>
+                        <div class="loader-heart">❤</div>
+                    </div>
+                    <h3 id="loading-title">आपकी बात ध्यान से समझी जा रही है...</h3>
+                    <p id="loading-subtitle" class="text-muted">Aura AI स्वास्थ्य सलाह तैयार कर रहा है। कृपया प्रतीक्षा करें।</p>
+                </div>
+
+                <!-- 3. RESULT STATE -->
+                <div class="output-state-view hidden" id="state-result">
+                    <!-- Tab Navigation -->
+                    <div class="result-tabs">
+                        <button class="tab-btn active" id="tab-advice" onclick="switchTab('advice')">
+                            <span class="tab-icon">🌸</span>
+                            <span id="tab-lbl-advice">स्वास्थ्य सलाह (Advice)</span>
+                        </button>
+                        <button class="tab-btn" id="tab-asha" onclick="switchTab('asha')">
+                            <span class="tab-icon">📋</span>
+                            <span id="tab-lbl-asha">आशा दीदी कार्ड (ASHA Card)</span>
+                        </button>
+                        <button class="tab-btn" id="tab-history" onclick="switchTab('history')">
+                            <span class="tab-icon">📜</span>
+                            <span id="tab-lbl-history">इतिहास (History)</span>
+                        </button>
+                    </div>
+
+                    <!-- Tab Contents -->
+                    <div class="tab-contents">
+                        
+                        <!-- TAB A: COMFORTING HTML ADVICE -->
+                        <div class="tab-pane active" id="pane-advice">
+                            <!-- TTS Control Panel -->
+                            <div class="tts-bar">
+                                <span class="tts-lbl" id="tts-label">🔊 सलाह सुनने के लिए दबाएं:</span>
+                                <div class="tts-controls">
+                                    <button class="tts-btn play" id="btn-tts-play" onclick="speakResult()" title="सुनें">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                                            <polygon points="5 9 9 9 14 4 14 20 9 15 5 15 5 9"></polygon>
+                                        </svg>
+                                        <span id="tts-play-txt">सुनें (Listen)</span>
+                                    </button>
+                                    <button class="tts-btn stop hidden" id="btn-tts-stop" onclick="stopSpeaking()" title="रोकें">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                                            <rect x="6" y="6" width="12" height="12"></rect>
+                                        </svg>
+                                        <span id="tts-stop-txt">बंद करें (Stop)</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Rendered HTML Advice (Direct, no markdown markers) -->
+                            <div class="formatted-advice-content" id="advice-content-container">
+                                <!-- Raw HTML content injected directly from AI -->
+                            </div>
+                        </div>
+
+                        <!-- TAB B: ASHA CARD (DOCTOR DASHBOARD SUMMARY) -->
+                        <div class="tab-pane" id="pane-asha">
+                            <div class="asha-card-wrapper" id="asha-card-content">
+                                <!-- Card Header -->
+                                <div class="asha-card-header">
+                                    <div class="asha-card-title-group">
+                                        <h4>Aura Triage Medical Ticket</h4>
+                                        <p>ASHA Worker & Local Doctor Consultation Card</p>
+                                    </div>
+                                    <div class="triage-severity-badge" id="asha-severity-badge">
+                                        Safe / सुरक्षित
+                                    </div>
+                                </div>
+
+                                <!-- Card Body grid -->
+                                <div class="asha-card-grid">
+                                    <div class="asha-card-item col-full">
+                                        <span class="asha-card-label">Symptom Reported (colloquial):</span>
+                                        <div class="asha-card-value text-italic" id="asha-raw-symptoms">
+                                            "safed pani ana aur peth dard"
+                                        </div>
+                                    </div>
+
+                                    <div class="asha-card-item">
+                                        <span class="asha-card-label">Clinical Translation:</span>
+                                        <div class="asha-card-value highlight-val" id="asha-clinical-term">
+                                            Leukorrhea / Vaginal Discharge
+                                        </div>
+                                    </div>
+
+                                    <div class="asha-card-item">
+                                        <span class="asha-card-label">Potential Condition:</span>
+                                        <div class="asha-card-value" id="asha-potential-cond">
+                                            Bacterial Vaginosis or Candidiasis
+                                        </div>
+                                    </div>
+
+                                    <div class="asha-card-item col-full">
+                                        <span class="asha-card-label">Critical Questions for ASHA Worker to ask:</span>
+                                        <ul class="asha-card-list" id="asha-questions-list">
+                                            <li>Is there itching or burning urination?</li>
+                                            <li>What is the color of the discharge (yellow/grey/curdy white)?</li>
+                                            <li>Is there foul odor?</li>
+                                        </ul>
+                                    </div>
+
+                                    <div class="asha-card-item">
+                                        <span class="asha-card-label">Recommended Vitals:</span>
+                                        <div class="asha-card-value" id="asha-vitals-to-check">
+                                            Temperature, Pelvic tenderness, BP if pregnant
+                                        </div>
+                                    </div>
+
+                                    <div class="asha-card-item">
+                                        <span class="asha-card-label">Primary Action Plan:</span>
+                                        <div class="asha-card-value" id="asha-action-plan">
+                                            Refer to ANM/MO at Sub-center for vaginal swab or syndromic treatment kit.
+                                        </div>
+                                    </div>
+
+                                    <!-- QR Code Offline sync section -->
+                                    <div class="asha-card-item col-full qrcode-item">
+                                        <span class="asha-card-label">Scan Offline QR for Medical Record:</span>
+                                        <div class="asha-qrcode-container">
+                                            <div id="asha-qrcode-svg-wrapper">
+                                                <!-- Dynamic QR Code SVG rendered offline -->
+                                            </div>
+                                            <p class="asha-qrcode-help">Scan using another phone to copy this medical report instantly offline.</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Card Footer -->
+                                <div class="asha-card-footer">
+                                    <span>Aura Engine v2.0 • Digital Triage Record</span>
+                                    <span id="asha-timestamp">28-05-2026</span>
+                                </div>
+                            </div>
+
+                            <!-- Action bar for ASHA CARD -->
+                            <div class="asha-card-actions">
+                                <button class="action-btn-secondary" onclick="copyAuraTicketText()">
+                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                    </svg>
+                                    <span id="btn-txt-copy">कॉपी करें (Copy Ticket)</span>
+                                </button>
+                                <button class="action-btn-primary" onclick="printAuraTicket()">
+                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                                        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                                        <rect x="6" y="14" width="12" height="8"></rect>
+                                    </svg>
+                                    <span id="btn-txt-print">प्रिंट / डाउनलोड (Print Card)</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- TAB C: PATIENT RECORD HISTORY (EHR) -->
+                        <div class="tab-pane" id="pane-history">
+                            <div class="history-pane-header">
+                                <h4 id="history-section-title">पुराने स्वास्थ्य परामर्श (Past History Logs)</h4>
+                                <button class="btn-clear-history" id="btn-clear-history" onclick="clearHistory()">इतिहास साफ करें (Clear Logs)</button>
+                            </div>
+                            <div class="history-list" id="history-list-container">
+                                <!-- Dynamic history cards generated client-side -->
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+        </main>
+        
+        <!-- FOOTER -->
+        <footer class="app-footer">
+            <p>Designed with care for Indian Rural Healthcare Ecosystem. AI recommendations are for guiding purposes; always consult a medical doctor or ANM for prescriptions.</p>
+        </footer>
+    </div>
+
+    <!-- AI SETTINGS & CONFIGURATION MODAL (POPUP DIALOG) -->
+    <div class="modal-overlay" id="settings-modal" onclick="closeModalOnBackdrop(event)">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Aura Engine v2.0 - Configuration Dashboard</h3>
+                <button class="modal-close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <!-- AI Model Source Toggle -->
+                <div class="form-group">
+                    <label class="form-label" for="ai-source">AI Processing Source:</label>
+                    <select id="ai-source" class="form-select" onchange="toggleAiSourceFields()">
+                        <option value="offline">Aura Local Clinical Engine (Offline Optimized)</option>
+                        <option value="gemini">Gemini Live Generative AI Model (Online Integration)</option>
+                    </select>
+                    <p class="form-help">The local clinical engine works instantly offline, while the Gemini API creates customized LLM-generated health summaries.</p>
+                </div>
+
+                <!-- Gemini API Parameters (collapsible/conditional) -->
+                <div id="gemini-fields-container" class="hidden">
+                    <div class="form-group">
+                        <label class="form-label" for="gemini-key">Gemini API Key:</label>
+                        <div class="input-password-wrapper">
+                            <input type="password" id="gemini-key" class="form-input" placeholder="AIzaSy...">
+                            <button class="password-toggle-btn" onclick="togglePasswordVisibility('gemini-key')">Show</button>
+                        </div>
+                        <p class="form-help">Your API Key is saved locally in your browser memory and never sent to any server except directly to Google Gemini.</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="gemini-model">Select Model:</label>
+                        <select id="gemini-model" class="form-select">
+                            <option value="gemini-1.5-flash">Gemini 1.5 Flash (Fastest & Standard)</option>
+                            <option value="gemini-2.5-flash">Gemini 2.5 Flash (Advanced Reasoning)</option>
+                            <option value="gemini-1.5-pro">Gemini 1.5 Pro (Comprehensive Details)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="gemini-temp">Temperature (Creativity/Clinical Tone):</label>
+                        <div class="slider-wrapper">
+                            <input type="range" id="gemini-temp" min="0.0" max="1.0" step="0.1" value="0.2" class="form-slider" oninput="document.getElementById('temp-val').innerText = this.value">
+                            <span class="slider-value" id="temp-val">0.2</span>
+                        </div>
+                        <p class="form-help">Lower values (e.g., 0.1 - 0.3) generate more clinical, consistent responses suitable for medical guidance.</p>
+                    </div>
+                </div>
+
+                <!-- Interactive Test Scenarios selector -->
+                <div class="form-group border-top">
+                    <label class="form-label" for="test-scenario">Clinician Test Presets (Instant Simulation):</label>
+                    <select id="test-scenario" class="form-select" onchange="loadPresetScenario()">
+                        <option value="">-- Choose a test case to pre-fill symptoms --</option>
+                        <option value="leukorrhea">Safed pani aana (Vaginal Discharge & Burning)</option>
+                        <option value="uti">Peshab me tez jalan (Severe UTI signs)</option>
+                        <option value="dysmenorrhea">Mahavari me dard aur ulti (Severe Dysmenorrhea)</option>
+                        <option value="anemia">Bahut thakan, kamar dard, kamzori (Iron deficiency/Anemia)</option>
+                        <option value="breast_pain">Stan me dard aur gath (Breast Pain / Suspected Mastitis)</option>
+                    </select>
+                    <p class="form-help">Selecting a preset automatically writes standard rural symptoms in Hinglish/Hindi and sets appropriate language settings.</p>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+                <button class="btn-save" onclick="saveSettings()">Save & Apply Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast Element -->
+    <div id="toast" class="toast hidden">Settings updated successfully!</div>
+
+    <!-- Javascript integration -->
+    <script src="app.js"></script>
+</body>
+</html>
