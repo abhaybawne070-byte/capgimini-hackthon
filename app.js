@@ -997,27 +997,39 @@ function clearHistory() {
 // ==========================================================================
 function generateOfflineQrCode(meta, timestamp) {
     const qrWrapper = document.getElementById('asha-qrcode-svg-wrapper');
+    if (!qrWrapper) return;
     qrWrapper.innerHTML = '';
 
-    // Compact summary string to fit in QR Code Version 4 / 5
-    const ticketData = `AURA-TICKET v2.0
-Date: ${timestamp}
-Severity: ${meta.severity.toUpperCase()}
-Symptoms: ${meta.rawText.substring(0, 50)}
-Clinical: ${meta.clinicalTerm}
-Cause: ${meta.potentialCondition}
-Vitals: ${meta.vitals}
-Action: ${meta.action}`;
-
     try {
+        if (!meta) {
+            throw new Error("No metadata provided for QR generation");
+        }
+
+        const severityVal = (meta.severity || 'safe').toUpperCase();
+        const rawTextVal = (meta.rawText || '').substring(0, 40);
+        const clinicalTermVal = (meta.clinicalTerm || '').substring(0, 45);
+        const potentialConditionVal = (meta.potentialCondition || '').substring(0, 45);
+        const vitalsVal = (meta.vitals || '').substring(0, 45);
+        const actionVal = (meta.action || '').substring(0, 45);
+
+        // Compact summary string to fit in QR Code Version 10
+        const ticketData = `AURA-TICKET v2.0
+Date: ${timestamp || ''}
+Severity: ${severityVal}
+Symptoms: ${rawTextVal}
+Clinical: ${clinicalTermVal}
+Cause: ${potentialConditionVal}
+Vitals: ${vitalsVal}
+Action: ${actionVal}`;
+
         // Initialize custom tiny encoder
         const qr = new CompactQRCode(ticketData);
         const svgElement = qr.toSVGElement();
         qrWrapper.appendChild(svgElement);
     } catch (e) {
         console.error("Local QR Code Generation error:", e);
-        // Fallback placeholder text if encoding size overflows
-        qrWrapper.innerHTML = `<span style="font-size: 0.8rem; color:#dc3545; text-align:center;">QR Code Overflow (Text too long)</span>`;
+        // Fallback placeholder text if encoding size overflows or other error occurs
+        qrWrapper.innerHTML = `<span style="font-size: 0.8rem; color:#dc3545; text-align:center;">QR Generation Error: ${e.message}</span>`;
     }
 }
 
